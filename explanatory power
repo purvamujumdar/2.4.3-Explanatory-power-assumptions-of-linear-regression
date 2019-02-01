@@ -1,0 +1,58 @@
+import math
+import warnings
+
+from IPython.display import display
+from matplotlib import pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn import linear_model
+import statsmodels.formula.api as smf
+
+# Display preferences.
+%matplotlib inline
+pd.options.display.float_format = '{:.3f}'.format
+
+# Suppress annoying harmless error.
+warnings.filterwarnings(
+    action="ignore",
+    module="scipy",
+    message="^internal gelsd"
+)
+# Acquire, load, and preview the data.
+data = pd.read_csv('https://tf-curricula-prod.s3.amazonaws.com/data-science/Advertising.csv')
+display(data.head())
+data['TV_feature']= np.sqrt(data['TV'])
+data['Radio_feature']= np.square(data['Radio'])
+data['Newspaper_feature']= np.square(data['Newspaper'])
+# Instantiate and fit our model.
+regr = linear_model.LinearRegression()
+Y = data['Sales'].values.reshape(-1, 1)
+X = data[['TV_feature','Radio_feature','Newspaper_feature']]
+regr.fit(X, Y)
+
+# Inspect the results.
+print('\nCoefficients: \n', regr.coef_)
+print('\nIntercept: \n', regr.intercept_)
+print('\nR-squared:')
+print(regr.score(X, Y))
+# Extract predicted values.
+predicted = regr.predict(X).ravel()
+actual = data['Sales']
+
+# Calculate the error, also called the residual.
+residual = actual - predicted
+
+# This looks a bit concerning.
+plt.hist(residual)
+plt.title('Residual counts')
+plt.xlabel('Residual')
+plt.ylabel('Count')
+plt.show()
+
+plt.scatter(predicted, residual)
+plt.xlabel('Predicted')
+plt.ylabel('Residual')
+plt.axhline(y=0)
+plt.title('Residual vs. Predicted')
+plt.show()
